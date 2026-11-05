@@ -82,7 +82,6 @@ jobs:
           ls -lh Release/apk/
 
       - name: 'Publish to GitHub Release (tag: latest)'
-        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -96,24 +95,18 @@ jobs:
           - 📱 **手机 64位**：[XTV-mobileArm64_v8a.apk](https://github.com/${{ github.repository }}/releases/download/latest/XTV-mobileArm64_v8a.apk)
           - 📱 **手机 32位**：[XTV-mobileArmeabi_v7a.apk](https://github.com/${{ github.repository }}/releases/download/latest/XTV-mobileArmeabi_v7a.apk)
           EOF
-          echo "---convénients liste---"
           ls -lh Release/apk/
-          echo "---gh---"
-          gh --version || true
-          echo "---delete old---"
           gh release delete latest --yes || true
           git tag -d latest 2>/dev/null || true
           git push origin :refs/tags/latest 2>/dev/null || true
-          echo "---create---"
-          set -x
           gh release create latest Release/apk/*.apk \
             --title "小影视 (XTV) 最新安装包" \
-            --notes-file release_notes.md 2>&1
-          echo "gh_exit:$?"
+            --notes-file release_notes.md
 
       - name: Upload Artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: XTV-APKs
           path: Release/apk/*.apk
-          if-no-files-found: error
+          if-no-files-found: warn
