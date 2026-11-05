@@ -38,10 +38,11 @@ jobs:
 
       - name: Setup keystore (debug fallback)
         run: |
-          keytool -genkeypair -keystore release.keystore -alias debugkey \
+          keytool -genkeypair -keystore "$GITHUB_WORKSPACE/release.keystore" -alias debugkey \
             -keyalg RSA -keysize 2048 -validity 3650 \
             -keypass debug123 -storepass debug123 \
             -dname "CN=Android, OU=Android, O=Android, L=SZ, ST=GD, C=CN"
+          ls -lh release.keystore
 
       - name: Write local.properties
         run: |
@@ -51,20 +52,23 @@ jobs:
           echo "storePassword=debug123" >> local.properties
           echo "keyPassword=debug123" >> local.properties
           cat local.properties
+          ls -lh release.keystore local.properties
 
       - name: Build APKs (Leanback + Mobile, arm64 + v7a)
         run: |
           chmod +x gradlew
           export ANDROID_HOME=/usr/local/lib/android/sdk
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
-          set -o pipefail
+          ls -lh release.keystore local.properties
+          cat local.properties
+          set +e
           ./gradlew assembleDebug --stacktrace 2>&1 | tee build.log
           rc=${PIPESTATUS[0]}
           echo "gradlew_exit:$rc"
-          cat build.log | tail -200
+          cat build.log | tail -300
           if [ $rc -ne 0 ]; then
             echo "BUILD FAILED, searching for error"
-            grep -i -E "error|exception|failed|what went wrong" build.log | tail -100 || true
+            grep -i -E "error|exception|failed|what went wrong|FAILED|STORE|KEYSTORE|SIGNING|Keystore" build.log | tail -150 || true
             exit $rc
           fi
           find app/build/outputs/apk -type f | head -20
