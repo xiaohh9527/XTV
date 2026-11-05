@@ -61,7 +61,11 @@ jobs:
           chmod +x gradlew
           export ANDROID_HOME=/usr/local/lib/android/sdk
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
-          ./gradlew assembleDebug --stacktrace 2>&1 | tee build.log; echo "exit:$?"
+          set -o pipefail
+          ./gradlew assembleDebug --stacktrace 2>&1 | tee build.log
+          echo "gradlew_exit:${PIPESTATUS[0]}"
+          find app/build/outputs/apk -type f | head -20
+          ls -R app/build/outputs/apk 2>&1 | head -100
 
       - name: Upload build log
         if: failure()
@@ -74,12 +78,15 @@ jobs:
       - name: Rename APKs
         run: |
           mkdir -p Release/apk
+          find app/build/outputs/apk -name "*.apk" -exec ls -lh {} \;
           find app/build/outputs/apk -name "*.apk" | while read f; do
-            n=$(basename "$f" | sed 's/^app-//; s/-debug/.apk/')
+            # app-leanback-arm64-v8a-debug.apk -> XTV-leanback-arm64-v8a.apk
+            n=$(basename "$f" | sed 's/^app-//; s/-debug\.apk/.apk/')
             echo "$f -> Release/apk/XTV-$n"
             cp "$f" "Release/apk/XTV-$n"
           done
           ls -lh Release/apk/
+          test -n "$(ls Release/apk/*.apk 2>/dev/null)" || (echo "NO APKs FOUND" && ls -R app/build/outputs/apk && exit 1)
 
       - name: 'Publish to GitHub Release (tag: latest)'
         env:
