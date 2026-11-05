@@ -59,17 +59,22 @@ jobs:
       - name: Build APKs (Leanback + Mobile, arm64 + v7a)
         run: |
           chmod +x gradlew
-          ./gradlew \
-            :app:assembleLeanbackArm64_v8aDebug \
-            :app:assembleLeanbackArmeabi_v7aDebug \
-            :app:assembleMobileArm64_v8aDebug \
-            :app:assembleMobileArmeabi_v7aDebug \
-            --stacktrace
+          export ANDROID_HOME=/usr/local/lib/android/sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+          ./gradlew assembleDebug --stacktrace 2>&1 | tee build.log; echo "exit:$?"
+
+      - name: Upload build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: error
 
       - name: Rename APKs
         run: |
           mkdir -p Release/apk
-          for f in app/build/outputs/apk/**/app-*-debug.apk; do
+          find app/build/outputs/apk -name "*.apk" | while read f; do
             n=$(basename "$f" | sed 's/^app-//; s/-debug/.apk/')
             echo "$f -> Release/apk/XTV-$n"
             cp "$f" "Release/apk/XTV-$n"
