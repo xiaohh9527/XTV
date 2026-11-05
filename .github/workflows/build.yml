@@ -38,7 +38,7 @@ jobs:
 
       - name: Setup keystore (debug fallback)
         run: |
-          keytool -genkeypair -keystore "$GITHUB_WORKSPACE/release.keystore" -alias debugkey \
+          keytool -genkeypair -keystore release.keystore -alias debugkey \
             -keyalg RSA -keysize 2048 -validity 3650 \
             -keypass debug123 -storepass debug123 \
             -dname "CN=Android, OU=Android, O=Android, L=SZ, ST=GD, C=CN"
@@ -47,7 +47,7 @@ jobs:
       - name: Write local.properties
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
-          echo "storeFile=release.keystore" >> local.properties
+          echo "storeFile=$GITHUB_WORKSPACE/release.keystore" >> local.properties
           echo "keyAlias=debugkey" >> local.properties
           echo "storePassword=debug123" >> local.properties
           echo "keyPassword=debug123" >> local.properties
