@@ -61,14 +61,12 @@ jobs:
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
           ls -lh release.keystore local.properties
           cat local.properties
-          set +e
           ./gradlew assembleDebug --stacktrace 2>&1 | tee build.log
           rc=${PIPESTATUS[0]}
           echo "gradlew_exit:$rc"
-          cat build.log | tail -300
+          cat build.log | tail -500
           if [ $rc -ne 0 ]; then
-            echo "BUILD FAILED, searching for error"
-            grep -i -E "error|exception|failed|what went wrong|FAILED|STORE|KEYSTORE|SIGNING|Keystore" build.log | tail -150 || true
+            echo "BUILD FAILED"
             exit $rc
           fi
           find app/build/outputs/apk -type f | head -20
