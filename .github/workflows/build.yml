@@ -24,14 +24,13 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Accept SDK licenses
+      - name: Install SDK packages
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
         run: |
-          echo "sdk.dir=$ANDROID_HOME" > local.properties
-          ls -la "$ANDROID_HOME/cmdline-tools/latest/bin/" || true
-          ls -la /usr/local/lib/android/sdk/ || true
-          find /usr/local -maxdepth 4 -name sdkmanager 2>/dev/null || true
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+          yes | sdkmanager --licenses || true
+          sdkmanager "build-tools;37.0.0" "platforms;android-37" "platform-tools"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -40,7 +39,7 @@ jobs:
         run: |
           keytool -genkeypair -keystore release.keystore -alias debugkey \
             -keyalg RSA -keysize 2048 -validity 3650 \
-            -keypass debug -storepass debug \
+            -keypass debug123 -storepass debug123 \
             -dname "CN=Android, OU=Android, O=Android, L=SZ, ST=GD, C=CN"
 
       - name: Write local.properties
@@ -48,8 +47,8 @@ jobs:
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           echo "storeFile=release.keystore" >> local.properties
           echo "keyAlias=debugkey" >> local.properties
-          echo "storePassword=debug" >> local.properties
-          echo "keyPassword=debug" >> local.properties
+          echo "storePassword=debug123" >> local.properties
+          echo "keyPassword=debug123" >> local.properties
           cat local.properties
 
       - name: Build APKs (Leanback + Mobile, arm64 + v7a)
