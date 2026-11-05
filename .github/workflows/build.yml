@@ -29,8 +29,13 @@ jobs:
           ANDROID_HOME: /usr/local/lib/android/sdk
         run: |
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
-          yes | sdkmanager --licenses || true
-          sdkmanager "build-tools;37.0.0" "platforms;android-37" "platform-tools"
+          sdkmanager --list 2>&1 | head -100 || true
+          echo "---installed---"
+          sdkmanager --list_installed 2>&1 | head -50 || true
+          echo "---licenses---"
+          yes | sdkmanager --licenses 2>&1 | tail -20 || true
+          echo "---install 36 (known good)---"
+          sdkmanager "build-tools;36.0.0" "platforms;android-36" 2>&1 | tail -30 || true
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
