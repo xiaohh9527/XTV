@@ -66,7 +66,7 @@ jobs:
           done
           ls -lh Release/apk/
 
-      - name: Publish to GitHub Release (tag: latest)
+      - name: 'Publish to GitHub Release (tag: latest)'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
