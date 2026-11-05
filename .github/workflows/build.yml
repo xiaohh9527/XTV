@@ -1,0 +1,95 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build XTV APKs
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Setup keystore (debug fallback)
+        run: |
+          keytool -genkeypair -keystore release.keystore -alias debugkey \
+            -keyalg RSA -keysize 2048 -validity 3650 \
+            -keypass debug -storepass debug \
+            -dname "CN=Android, OU=Android, O=Android, L=SZ, ST=GD, C=CN"
+
+      - name: Write local.properties
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          echo "storeFile=release.keystore" >> local.properties
+          echo "keyAlias=debugkey" >> local.properties
+          echo "storePassword=debug" >> local.properties
+          echo "keyPassword=debug" >> local.properties
+          cat local.properties
+
+      - name: Build APKs (Leanback + Mobile, arm64 + v7a)
+        run: |
+          chmod +x gradlew
+          ./gradlew \
+            :app:assembleLeanbackArm64_v8aDebug \
+            :app:assembleLeanbackArmeabi_v7aDebug \
+            :app:assembleMobileArm64_v8aDebug \
+            :app:assembleMobileArmeabi_v7aDebug \
+            --stacktrace
+
+      - name: Rename APKs
+        run: |
+          mkdir -p Release/apk
+          for f in app/build/outputs/apk/**/app-*-debug.apk; do
+            n=$(basename "$f" | sed 's/^app-//; s/-debug/.apk/')
+            echo "$f -> Release/apk/XTV-$n"
+            cp "$f" "Release/apk/XTV-$n"
+          done
+          ls -lh Release/apk/
+
+      - name: Publish to GitHub Release (tag: latest)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cat << 'EOF' > release_notes.md
+          ### 📺 小影视 (XTV) 安装包
+
+          点击下方直接下载独立 `.apk` 文件：
+
+          - 📺 **电视端 64位**：[XTV-leanbackArm64_v8a.apk](https://github.com/${{ github.repository }}/releases/download/latest/XTV-leanbackArm64_v8a.apk)
+          - 📺 **电视端 32位**：[XTV-leanbackArmeabi_v7a.apk](https://github.com/${{ github.repository }}/releases/download/latest/XTV-leanbackArmeabi_v7a.apk)
+          - 📱 **手机 64位**：[XTV-mobileArm64_v8a.apk](https://github.com/${{ github.repository }}/releases/download/latest/XTV-mobileArm64_v8a.apk)
+          - 📱 **手机 32位**：[XTV-mobileArmeabi_v7a.apk](https://github.com/${{ github.repository }}/releases/download/latest/XTV-mobileArmeabi_v7a.apk)
+          EOF
+          gh release delete latest --yes || true
+          git tag -d latest 2>/dev/null || true
+          git push origin :refs/tags/latest 2>/dev/null || true
+          gh release create latest Release/apk/*.apk \
+            --title "小影视 (XTV) 最新安装包" \
+            --notes-file release_notes.md
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: XTV-APKs
+          path: Release/apk/*.apk
+          if-no-files-found: error

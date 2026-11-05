@@ -1,24 +1,26 @@
-# 影視TV
+# 小影视 (XTV)
 
-Android TV、手機、平板都能用，支援本地檔案與網址播放。
+基于 **FongMi/TV** 二次开发的聚合播放器，支持 Android TV、手机、平板，支持本地文件与 URL 播放。
 
-[使用指南](https://fongmi.github.io/TV) · [討論群組](https://t.me/fongmi_official)
+- **下载**：[👉 Releases 最新安装包](https://github.com/xiaohh9527/XTV/releases/tag/latest)
+- **上游**：https://github.com/FongMi/TV
+- **许可证**：GPL-3.0
 
 ## 主要功能
 
-- **瀏覽**：分類篩選、跨站搜尋、收藏、播放記錄與無痕模式。
-- **播放**：倍速、字幕、彈幕、片段跳過、畫中畫與背景音訊。
-- **直播**：分組選台、節目表、頻道收藏與線路切換。
-- **操作**：電視遙控器、手機手勢、DLNA 投放與接收。
-- **互通**：網頁遙控、檔案傳輸、記錄同步與 Android Auto。
+- **浏览**：分类筛选、跨站搜索、收藏、播放记录与无痕模式。
+- **播放**：倍速、字幕、弹幕、片段跳过、画中画与后台播放。
+- **直播**：分组选台、节目表、频道收藏与线路切换。
+- **操作**：电视遥控器、手机手势、DLNA 投放与接收。
+- **互通**：网页遥控、文件传输、记录同步与 Android Auto。
 
-爬蟲開發說明與 Java、Python、QuickJS 範例見 [CatVodSpider](https://github.com/FongMi/CatVodSpider)。
+## 云端构建
 
-## Star History
+本仓库使用 GitHub Actions 自动化构建（`.github/workflows/build.yml`，JDK 21 + Gradle 直编）。
 
-<a href="https://www.star-history.com/?repos=FongMi%2FTV&amp;type=date">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=FongMi/TV&amp;type=date&amp;theme=dark" />
-    <img alt="FongMi/TV Star History" src="https://api.star-history.com/chart?repos=FongMi/TV&amp;type=date" />
-  </picture>
-</a>
+每次推送到 `main` 分支后，会自动：
+
+1. 编译 **Leanback（电视端）+ Mobile（手机端）**、**arm64_v8a + armeabi_v7a** 四个 Debug APK；
+2. 发布到 Releases 的 `latest` 标签下，可直接下载安装。
+
+爬虫开发（Java / Python / QuickJS）说明见 [CatVodSpider](https://github.com/FongMi/CatVodSpider)。
